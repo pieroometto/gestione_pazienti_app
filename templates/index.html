@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Dashboard</h2>
+  <a href="{{ url_for('utenti') }}" class="btn btn-outline-primary">Gestione Utenti</a>
+</div>
+
+<!-- Pazienti -->
+<div class="mb-5">
+  <h4>Pazienti</h4>
+  <form method="post" action="/paziente/add" class="row g-3">
+    <div class="col-md-5">
+      <input name="nome" placeholder="Nome" class="form-control" required>
+    </div>
+    <div class="col-md-5">
+      <input name="cognome" placeholder="Cognome" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-success w-100">Aggiungi</button>
+    </div>
+  </form>
+  <ul class="list-group mt-3">
+    {% for p in pazienti %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ p.nome }} {{ p.cognome }}
+        <a href="/paziente/delete/{{ p.id }}" class="btn btn-sm btn-danger">Elimina</a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Interventi -->
+<div class="mb-5">
+  <h4>Interventi</h4>
+  <form method="post" action="/intervento/add" class="row g-3">
+    <div class="col-md-10">
+      <input name="descrizione" placeholder="Descrizione" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-success w-100">Aggiungi</button>
+    </div>
+  </form>
+  <ul class="list-group mt-3">
+    {% for i in interventi %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ i.descrizione }}
+        <a href="/intervento/delete/{{ i.id }}" class="btn btn-sm btn-danger">Elimina</a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- Caricamento Foto -->
+<div class="mb-5">
+  <h4>Caricamento Foto</h4>
+  <form method="post" action="/upload" enctype="multipart/form-data" class="row g-3">
+    <div class="col-md-3">
+      <select name="paziente" class="form-select" required>
+        {% for p in pazienti %}
+          <option value="{{ p.id }}">{{ p.nome }} {{ p.cognome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="intervento" class="form-select" required>
+        {% for i in interventi %}
+          <option value="{{ i.id }}">{{ i.descrizione }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="tipo" class="form-select" required>
+        <option value="pre">Pre-operatoria</option>
+        <option value="post">Post-operatoria</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="file" name="foto" class="form-control" required>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Carica</button>
+    </div>
+  </form>
+</div>
+
+<!-- Tabella Foto -->
+<div class="mb-5">
+  <h4>Foto Caricate</h4>
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle table-striped">
+      <thead class="table-light">
+        <tr>
+          <th>Paziente</th>
+          <th>Intervento</th>
+          <th>Fase</th>
+          <th>Caricata da</th>
+          <th>Data/Ora</th>
+          <th>Salvata su gestionale</th>
+          <th>Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in foto %}
+          <tr>
+            <td>
+              {% for p in pazienti %}
+                {% if p.id == f.paziente_id %}
+                  {{ p.nome }} {{ p.cognome }}
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>
+              {% for i in interventi %}
+                {% if i.id == f.intervento_id %}
+                  {{ i.descrizione }}
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>{{ f.tipo }}</td>
+            <td>{{ f.caricata_da }}</td>
+            <td>{{ f.data_ora }}</td>
+            <td>
+              <form method="post" action="{{ url_for('flag_foto', fid=f.id) }}">
+                <input class="form-check-input" type="checkbox" name="salvata" onchange="this.form.submit()" {% if f.salvata_su_gestionale %}checked{% endif %}>
+                {% if f.flag_modificato_da %}
+                  <br><small>{{ f.flag_modificato_da }}<br>{{ f.flag_modificato_data }}</small>
+                {% endif %}
+              </form>
+            </td>
+            <td>
+              <a href="{{ url_for('download_foto', filename=f.filename) }}" class="btn btn-sm btn-outline-secondary mb-1">Scarica</a>
+              <form method="post" action="{{ url_for('delete_foto', fid=f.id) }}" onsubmit="return confirm('Eliminare la foto?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
